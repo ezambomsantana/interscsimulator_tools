@@ -34,7 +34,7 @@ with open('../data/map.xml') as fd:
 
             x1, y1 = pyproj.transform('EPSG:32719', 'wgs84', x, y)
 
-            client = openrouteservice.Client(key='5b3ce3597851110001cf624810370a72249c4658ab1b22d88ab2ce4b') # Specify your personal API key
+            client = openrouteservice.Client(key='5b3ce3597851110001cf62482e175cc938d542aabd8eaac5e217a5c0') # Specify your personal API key
 
             print(x1, y1)
 
