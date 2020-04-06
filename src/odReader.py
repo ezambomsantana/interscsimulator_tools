@@ -34,36 +34,70 @@ data17['DESTINATION'] = data17.apply(lambda x: convert_lat_long(x,'CO_D_X', 'CO_
 modos17 = {0:'Other',1:'Work',2:'Work',3:'Work',4:'School',5:'Shopping',6:'Health',7:'Entertainment', 8:'House',9:'Seek Employment', 10: 'Personal Issues', 11:'Food'}
 data17['MOTIVO_D'] = data17['MOTIVO_D'].replace(modos17)
 
-modos17 = {0:'outros',1:'metro',2:'trem',3:'metro',4:'onibus',5:'onibus',6:'onibus',7:'fretado', 8:'escolar',9:'carro-dirigindo', 10: 'carro-passageiro', 11:'taxi', 12:'taxi-nao-convencional', 13:'moto', 14:'moto-passageiro', 15:'bicicleta', 16:'pe', 17: 'outros'}
+modos17 = {0:'outros',1:'metro',2:'trem',3:'metro',4:'onibus',5:'onibus',6:'onibus',7:'fretado', 8:'escolar',9:'carro-dirigindo', 10: 'carro-passageiro', 11:'taxi', 12:'taxi-nao-convencional', 13:'moto', 14:'moto-passageiro', 15:'bike', 16:'pe', 17: 'outros'}
 data17['MODOPRIN'] = data17['MODOPRIN'].replace(modos17)
+
+data17 = data17[data17['MUNI_O'] == 36]
+data17 = data17[data17['MUNI_D'] == 36]
 
 print('1 - finish reading the OD file')
 
 print('2 - start reading the map file')
+ids = []
 points = []
-with open('../data/map.xml') as fd:
-    doc = xmltodict.parse(fd.read())    
-    for element in doc['network']['nodes']['node']:
-        x = str(element['@x'])
-        y = str(element['@y'])
-        x1, y1 = pyproj.transform('EPSG:32719', 'wgs84', x, y)
-        points.append((x1,y1))
+map = pd.read_csv('../data/lat_long.csv', header=0,delimiter=",", low_memory=False) 
+for index, row in map.iterrows():
+    id = row['id']
+    x1 = row['lat']
+    y1 = row['lon']
+    ids.append(int(id))
+    points.append((x1,y1))
 
 
 print('2 - finish reading the map file')
 
 tree = spatial.KDTree(points)
-print(tree.query([(-23.53126491870791, -46.67714695208408)]))
 
+count_total = 0
+count_reject = 0
 print('2 - generating the trips')
 for index, row in data17.iterrows():
     origin = row['ORIGIN']
     destination = row['DESTINATION']
     modo = row['MODOPRIN']
+    hora = int(row['H_SAIDA'])
+    minuto = int(row['MIN_SAIDA'])
+    count = int(row['FE_VIA'])
 
-    podcast = SubElement(top, 'trip',
-                             {'mode':modo,
+    start = hora * 60 * 60 + minuto * 60
+
+    if modo != 'bike':
+        continue
+
+    origin_point = tree.query(origin)
+    dist_origin = origin_point[0]
+    node_origin = origin_point[1]
+    
+    destination_point = tree.query(destination)
+    dist_dest = destination_point[0]
+    node_dest = destination_point[1]
+
+    if dist_dest > 0.03 and dist_origin > 0.03:
+        count_reject = count_reject + 1
+        continue
+    count_total = count_total + 1
+    trip = SubElement(top, 'trip',
+                             {
+                              'name': 'trip' + str(count_total),  
+                              'mode': modo,
+                              'origin': str(ids[node_origin]),
+                              'destination': str(ids[node_dest]),
+                              'start': str(start),
+                              'count': str(count),
                               })
+print(count_reject)
+print(count_total)
+print(len(data17.index))
 
 with open("trips.xml", "w") as f:
     f.write(tostring(top))
