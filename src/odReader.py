@@ -99,5 +99,5 @@ print(count_reject)
 print(count_total)
 print(len(data17.index))
 
-with open("trips.xml", "w") as f:
+with open("../data/trips.xml", "w") as f:
     f.write(tostring(top))
