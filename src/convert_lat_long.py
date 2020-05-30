@@ -18,7 +18,6 @@ with open('../data/map.xml') as fd:
         x = str(element['@x'])
         y = str(element['@y'])
 
-
         x1, y1 = pyproj.transform('EPSG:32719', 'wgs84', x, y)
 
         ids.append(element['@id'])

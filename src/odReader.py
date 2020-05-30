@@ -14,7 +14,7 @@ import xmltodict
 import pyproj
 from scipy import spatial
 
-top = Element('scmatrix')
+top = Element('scsimulator_matrix')
 top.set('version', '1.0')
 
 print('1 - start reading the OD file')
@@ -61,7 +61,7 @@ tree = spatial.KDTree(points)
 count_total = 0
 count_reject = 0
 print('2 - generating the trips')
-for index, row in data17.iterrows():
+for index, row in data17.iterrows():    
     origin = row['ORIGIN']
     destination = row['DESTINATION']
     modo = row['MODOPRIN']
@@ -82,13 +82,13 @@ for index, row in data17.iterrows():
     dist_dest = destination_point[0]
     node_dest = destination_point[1]
 
-    if dist_dest > 0.03 and dist_origin > 0.03:
+    if dist_dest > 0.01 and dist_origin > 0.01:
         count_reject = count_reject + 1
         continue
     count_total = count_total + 1
     trip = SubElement(top, 'trip',
                              {
-                              'name': 'trip' + str(count_total),  
+                              'name': 'trip_' + str(index),  
                               'mode': modo,
                               'origin': str(ids[node_origin]),
                               'destination': str(ids[node_dest]),
